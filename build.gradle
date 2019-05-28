@@ -48,56 +48,56 @@ artifacts {
   archives javadocJar, sourcesJar
 }
 
-signing {
-  sign configurations.archives
-}
+//signing {
+//  sign configurations.archives
+//}
 
-uploadArchives {
-  repositories {
-    mavenDeployer {
-      beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-      repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
-        authentication(userName: ossrhUsername, password: ossrhPassword)
-      }
-
-      snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
-        authentication(userName: ossrhUsername, password: ossrhPassword)
-      }
-
-      pom.project {
-        name 'AWS KMS compliance checker'
-        packaging 'jar'
-        description 'A checker for the Checker Framework that assures that KMS keys are 256 bits.'
-        url 'https://github.com/awslabs/aws-kms-compliance-checker'
-
-        scm {
-          connection 'https://github.com/awslabs/aws-kms-compliance-checker.git'
-          developerConnection 'git@github.com:awslabs/aws-kms-compliance-checker.git'
-          url 'https://github.com/awslabs/aws-kms-compliance-checker'
-        }
-
-        licenses {
-          license {
-            name 'The Apache License, Version 2.0'
-            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-          }
-        }
-
-        developers {
-          developer {
-            id 'kelloggm'
-            name 'Martin Kellogg'
-            email 'kelloggm@cs.washington.edu'
-          }
-
-          developer {
-            id 'seanmcl'
-            name 'Sean McLaughlin'
-            email 'seanmcl@amazon.com'
-          }
-        }
-      }
-    }
-  }
-}
+//uploadArchives {
+//  repositories {
+//    mavenDeployer {
+//      beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+//
+////      repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
+////        authentication(userName: ossrhUsername, password: ossrhPassword)
+////      }
+////
+////      snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
+////        authentication(userName: ossrhUsername, password: ossrhPassword)
+////      }
+//
+//      pom.project {
+//        name 'AWS KMS compliance checker'
+//        packaging 'jar'
+//        description 'A checker for the Checker Framework that assures that KMS keys are 256 bits.'
+//        url 'https://github.com/awslabs/aws-kms-compliance-checker'
+//
+//        scm {
+//          connection 'https://github.com/awslabs/aws-kms-compliance-checker.git'
+//          developerConnection 'git@github.com:awslabs/aws-kms-compliance-checker.git'
+//          url 'https://github.com/awslabs/aws-kms-compliance-checker'
+//        }
+//
+//        licenses {
+//          license {
+//            name 'The Apache License, Version 2.0'
+//            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+//          }
+//        }
+//
+//        developers {
+//          developer {
+//            id 'kelloggm'
+//            name 'Martin Kellogg'
+//            email 'kelloggm@cs.washington.edu'
+//          }
+//
+//          developer {
+//            id 'seanmcl'
+//            name 'Sean McLaughlin'
+//            email 'seanmcl@amazon.com'
+//          }
+//        }
+//      }
+//    }
+//  }
+//}

@@ -23,6 +23,7 @@ import org.checkerframework.framework.source.SuppressWarningsKeys;
 public class ComplianceChecker extends ValueChecker {
     @Override
     protected ComplianceVisitor createSourceVisitor() {
+        System.out.println("HELLO");
         return new ComplianceVisitor(this);
     }
 }

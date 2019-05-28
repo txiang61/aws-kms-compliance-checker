@@ -46,6 +46,7 @@ public class ComplianceAnnotatedTypeFactory extends ValueAnnotatedTypeFactory {
         public Void visitMemberSelect(MemberSelectTree tree, AnnotatedTypeMirror type) {
             if (DATA_KEY_SPEC.equals(getAnnotatedType(tree.getExpression()).getUnderlyingType().toString())) {
                 String identifier = tree.getIdentifier().toString();
+
                 type.replaceAnnotation(createStringAnnotation(Collections.singletonList(identifier)));
             }
             return super.visitMemberSelect(tree, type);
