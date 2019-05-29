@@ -14,8 +14,17 @@ configurations {
   checkerFrameworkAnnotatedJDK
 }
 
+ext {
+  jsr308 = file(new File("../..")).absolutePath
+  cfPath = "${jsr308}/checker-framework"
+  cfiPath = "${jsr308}/checker-framework-inference"
+  afu = "${jsr308}/annotation-tools/annotation-file-utilities"
+  compliancePath = "${jsr308}/aws-kms-compliance-checker"
+}
+
 dependencies {
-  annotationProcessor 'software.amazon.checkerframework:aws-kms-compliance-checker:1.0.2'
+  //annotationProcessor 'software.amazon.checkerframework:aws-kms-compliance-checker:1.0.2'
+  compile fileTree(dir: "${compliancePath}/build/classes/java/main", include: "aws-kms-compliance-checker-1.1.0.jar")
   checkerFrameworkAnnotatedJDK 'org.checkerframework:jdk8:2.6.0'
   implementation 'org.checkerframework:checker-qual:2.6.0'
   implementation group: 'com.amazonaws', name: 'aws-java-sdk-kms', version: '1.11.502'

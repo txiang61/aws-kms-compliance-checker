@@ -2,6 +2,7 @@
 /build/
 /tests/build
 /examples/target
+/examples/build
 
 # Ignore Gradle GUI config
 gradle-app.setting
@@ -17,6 +18,8 @@ gradle-app.setting
 
 # don't commit IntelliJ files
 *.iml
+.idea/
+.DS_Store
 
 # don't commit emacs backups
 *~

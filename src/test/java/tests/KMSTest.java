@@ -1,6 +1,7 @@
 import java.io.File;
 import java.util.List;
 
+import com.amazon.checkerframework.compliance.kms.typecheck.ComplianceChecker;
 import org.checkerframework.framework.test.CheckerFrameworkPerDirectoryTest;
 import org.junit.runners.Parameterized.Parameters;
 
@@ -25,7 +26,7 @@ import org.junit.runners.Parameterized.Parameters;
 public class KMSTest extends CheckerFrameworkPerDirectoryTest {
     public KMSTest(List<File> testFiles) {
         super(testFiles,
-	      com.amazon.checkerframework.compliance.kms.ComplianceChecker.class,
+	      ComplianceChecker.class,
 	      "kms",
 	      "-Anomsgtext",
 	      "-nowarn");

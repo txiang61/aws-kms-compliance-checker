@@ -1,32 +1,43 @@
 #!/bin/bash
+set -e
 
-WORKING_DIR=$(pwd)
-ROOT=$(cd $(dirname "$0")/.. && pwd)
-JAVAC=$ROOT/checker-framework/checker/bin-devel/javac
+# Environment
+export JSR308=/Users/ttx/Documents/jsr308_inference
+export CF=$JSR308/checker-framework
+export JAVAC=$CF/checker/bin/javac
+export AWSKMS=$JSR308/aws-sdk-java/aws-java-sdk-kms/target
 
-KMS_CHECKER=$ROOT/cast-checker
+export KMS=$JSR308/aws-kms-compliance-checker
 
-cd $WORKING_DIR
+# Dependencies
+export CLASSPATH=$KMS/build/classes/java/main:$AWSKMS/aws-java-sdk-kms-1.11.562-SNAPSHOT.jar:$KMS/aws-java-sdk-core-1.11.561.jar
 
-files=$1
-java_files=""
-shift
-while [ $# -gt 0 ]
-do
-    files="$files $1"
-    shift
+# Command
+DEBUG=""
+CHECKER="com.amazon.checkerframework.compliance.kms.ComplianceChecker"
+
+declare -a ARGS
+for i in "$@" ; do
+    if [[ $i == "-d" ]] ; then
+        echo "Typecheck using debug mode. Listening at port 5050. Waiting for connection...."
+        DEBUG="-J-Xdebug -J-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5050"
+        continue
+    fi
+
+    if [[ $i == "-i" ]] ; then
+        echo "Typecheck using aws-kms-compliance-checker typechecking mode"
+        CHECKER="com.amazon.checkerframework.compliance.kms.ComplianceChecker"
+        continue
+    fi
+    ARGS[${#ARGS[@]}]="$i"
 done
 
-for entry in $(find $files -name '*.java' -or -name '*.doc')
-do
-    java_files="$java_files $entry"
-done
+cmd=""
 
-echo $java_files
+if [ "$DEBUG" == "" ]; then
+	cmd="$JAVAC -cp "${CLASSPATH}" -processor "${CHECKER}" "${ARGS[@]}""
+else
+	cmd="$JAVAC "$DEBUG" -cp "${CLASSPATH}" -processor "${CHECKER}" -AatfDoNotCache "${ARGS[@]}""
+fi
 
-# no cast checker invocation:
-# $JAVAC $java_files
-
-# has cast checker invocation:
-# -Acfgviz=org.checkerframework.dataflow.cfg.DOTCFGVisualizer,verbose,outdir=dotfile
-$JAVAC -AuseDefaultsForUncheckedCode=bytecode -processor com.amazon.checkerframework.compliance.kms.ComplianceChecker -cp $KMS_CHECKER/bin:$KMS_CHECKER/lib $java_files 
+eval "$cmd"

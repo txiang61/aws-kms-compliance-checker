@@ -1,5 +1,6 @@
-package com.amazon.checkerframework.compliance.kms;
+package com.amazon.checkerframework.compliance.kms.typecheck;
 
+import com.amazon.checkerframework.compliance.kms.typecheck.ComplianceAnnotatedTypeFactory;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.common.value.ValueVisitor;
 

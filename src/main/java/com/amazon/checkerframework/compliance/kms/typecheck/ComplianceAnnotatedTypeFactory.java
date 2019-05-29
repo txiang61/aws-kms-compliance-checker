@@ -1,4 +1,4 @@
-package com.amazon.checkerframework.compliance.kms;
+package com.amazon.checkerframework.compliance.kms.typecheck;
 
 import com.sun.source.tree.MemberSelectTree;
 import org.checkerframework.common.basetype.BaseTypeChecker;

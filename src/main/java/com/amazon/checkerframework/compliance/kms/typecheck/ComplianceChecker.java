@@ -1,5 +1,6 @@
-package com.amazon.checkerframework.compliance.kms;
+package com.amazon.checkerframework.compliance.kms.typecheck;
 
+import com.amazon.checkerframework.compliance.kms.typecheck.ComplianceVisitor;
 import org.checkerframework.common.value.ValueChecker;
 import org.checkerframework.framework.qual.StubFiles;
 import org.checkerframework.framework.source.SuppressWarningsKeys;
@@ -23,7 +24,6 @@ import org.checkerframework.framework.source.SuppressWarningsKeys;
 public class ComplianceChecker extends ValueChecker {
     @Override
     protected ComplianceVisitor createSourceVisitor() {
-        System.out.println("HELLO");
         return new ComplianceVisitor(this);
     }
 }

@@ -1,4 +1,4 @@
-package com.amazon.checkerframework.compliance.kms;
+package com.amazon.checkerframework.compliance.kms.qual;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
