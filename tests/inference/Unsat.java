@@ -2,8 +2,8 @@ import com.amazon.checkerframework.compliance.kms.inference.qual.*;
 
 public class Unsat {
 
-    void inferTop(@AES256 String p) {
+    void inferTop(@AES_256 String p) {
         String s = p;
-        @AES String x = s;
+        @AES128 String x = s;
     }
 }

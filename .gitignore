@@ -23,3 +23,8 @@ gradle-app.setting
 
 # don't commit emacs backups
 *~
+
+# Jenny's tests
+*.class
+annotated/
+default.jaif

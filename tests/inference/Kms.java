@@ -6,11 +6,11 @@ import javax.crypto.spec.SecretKeySpec;
 import com.amazon.checkerframework.compliance.kms.inference.qual.*;
 
 class Kms {
-    private final Integer kmsBits = 256;
-    private final String algorithm = "AES";
+    private final @IntVal256 int kmsBits = 256;
+    private final @AES String algorithm = "AES";
 
     String getKeySpec() {
-        String keySpec = algorithm + "_" + kmsBits;
+        @AES_256 String keySpec = algorithm + "_" + kmsBits;
         return keySpec;
     }
 }

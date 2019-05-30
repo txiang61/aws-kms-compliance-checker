@@ -8,5 +8,5 @@ import org.checkerframework.framework.qual.SubtypeOf;
 @Documented
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
 @SubtypeOf({StringVal.class})
-public @interface AES256 {
+public @interface AES_256 {
 }

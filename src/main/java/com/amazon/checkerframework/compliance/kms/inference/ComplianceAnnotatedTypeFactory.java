@@ -1,5 +1,6 @@
 package com.amazon.checkerframework.compliance.kms.inference;
 
+import com.sun.source.tree.BinaryTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.LiteralTree;
 import org.checkerframework.framework.qual.LiteralKind;
@@ -85,13 +86,39 @@ public class ComplianceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
     @Override
     protected TreeAnnotator createTreeAnnotator() {
         return new ListTreeAnnotator(
-                new ComplianceTreeAnnotator(this), new ComplianceImplicitsTreeAnnotator(this));
+                new ComplianceTreeAnnotator(this),
+                new ComplianceImplicitsTreeAnnotator(this),
+                new CompliancePropagationTreeAnnotator(this));
     }
 
     /** The TreeAnnotator for this AnnotatedTypeFactory. It adds/replaces annotations. */
     protected class ComplianceTreeAnnotator extends TreeAnnotator {
         public ComplianceTreeAnnotator(ComplianceAnnotatedTypeFactory factory) {
             super(factory);
+        }
+
+        private static final String DATA_KEY_SPEC = "com.amazonaws.services.kms.model.DataKeySpec";
+
+        /**
+         * The type of a value of the DataKeySpec enum is a StringVal with a
+         * value equal to the name of the member. So, for example, DataKeySpec.AES_256's
+         * type is @StringVal("AES_256").
+         */
+        @Override
+        public Void visitMemberSelect(MemberSelectTree tree, AnnotatedTypeMirror type) {
+            if (DATA_KEY_SPEC.equals(getAnnotatedType(tree.getExpression()).getUnderlyingType().toString())) {
+                String identifier = tree.getIdentifier().toString();
+                if (identifier.equals("AES_256")) {
+                    AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES_256.class);
+                    AnnotationMirror numberAnno = builder.build();
+                    type.replaceAnnotation(numberAnno);
+                } else if (identifier.equals("AES_128")) {
+                    AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES_128.class);
+                    AnnotationMirror numberAnno = builder.build();
+                    type.replaceAnnotation(numberAnno);
+                }
+            }
+            return super.visitMemberSelect(tree, type);
         }
 
         @Override
@@ -119,11 +146,11 @@ public class ComplianceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
                 case STRING_LITERAL:
                     String data_string= (String) value;
                     if (data_string.equals("AES_256")) {
-                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES256.class);
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES_256.class);
                         AnnotationMirror numberAnno = builder.build();
                         type.replaceAnnotation(numberAnno);
                     } else if (data_string.equals("AES_128")) {
-                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES128.class);
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES_128.class);
                         AnnotationMirror numberAnno = builder.build();
                         type.replaceAnnotation(numberAnno);
                     } else if (data_string.equals("AES")) {
@@ -143,6 +170,46 @@ public class ComplianceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
                 default:
                     return null;
             }
+        }
+    }
+
+    private final class CompliancePropagationTreeAnnotator extends PropagationTreeAnnotator {
+        public CompliancePropagationTreeAnnotator(ComplianceAnnotatedTypeFactory factory) {
+            super(factory);
+        }
+
+        @Override
+        public Void visitBinary(BinaryTree binaryTree, AnnotatedTypeMirror type) {
+            Kind kind = binaryTree.getKind();
+            AnnotatedTypeMirror lhsATM = atypeFactory.getAnnotatedType(binaryTree.getLeftOperand());
+            AnnotatedTypeMirror rhsATM = atypeFactory.getAnnotatedType(binaryTree.getRightOperand());
+            AnnotationMirror lhsAM = lhsATM.getEffectiveAnnotationInHierarchy(UNKNOWNAES);
+            AnnotationMirror rhsAM = rhsATM.getEffectiveAnnotationInHierarchy(UNKNOWNAES);
+
+            switch (kind) {
+                case PLUS:
+                    if (lhsAM == null || rhsAM == null) {
+                        return super.visitBinary(binaryTree, type);
+                    }
+                    if (AnnotationUtils.areSameByClass(rhsAM, AES.class)
+                            && AnnotationUtils.areSameByClass(lhsAM, Underline.class)) {
+                        type.replaceAnnotation(AnnotationBuilder.fromClass(elements, AES_.class));
+                    } else if (AnnotationUtils.areSameByClass(rhsAM, AES_.class)
+                            && AnnotationUtils.areSameByClass(lhsAM, IntVal256.class)) {
+                        type.replaceAnnotation(AnnotationBuilder.fromClass(elements, AES_256.class));
+                    } else if (AnnotationUtils.areSameByClass(rhsAM, AES_.class)
+                            && AnnotationUtils.areSameByClass(lhsAM, IntVal128.class)) {
+                        type.replaceAnnotation(AnnotationBuilder.fromClass(elements, AES_128.class));
+                    } else {
+                        return super.visitBinary(binaryTree, type);
+                    }
+                    break;
+                default:
+                    // Check LUB by default
+                    return super.visitBinary(binaryTree, type);
+            }
+
+            return null;
         }
     }
 
