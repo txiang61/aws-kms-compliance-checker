@@ -1,76 +1,100 @@
 package com.amazon.checkerframework.compliance.kms.inference;
 
-import checkers.inference.InferenceAnnotatedTypeFactory;
-import checkers.inference.InferenceChecker;
-import checkers.inference.InferrableChecker;
-import checkers.inference.SlotManager;
-import checkers.inference.model.ConstraintManager;
-import com.amazon.checkerframework.compliance.kms.inference.qual.*;
-import com.sun.source.tree.*;
-import org.checkerframework.common.basetype.BaseAnnotatedTypeFactory;
+import com.sun.source.tree.ExpressionTree;
+import com.sun.source.tree.LiteralTree;
 import org.checkerframework.framework.qual.LiteralKind;
-import org.checkerframework.framework.type.treeannotator.TreeAnnotator;
-import checkers.inference.InferenceAnnotatedTypeFactory;
-import checkers.inference.InferenceChecker;
-import checkers.inference.InferenceTreeAnnotator;
-import checkers.inference.InferrableChecker;
-import checkers.inference.SlotManager;
-import checkers.inference.VariableAnnotator;
-import checkers.inference.model.ConstraintManager;
-import checkers.inference.util.InferenceViewpointAdapter;
+import com.sun.source.tree.MemberSelectTree;
+import com.sun.source.tree.MethodInvocationTree;
+import com.sun.source.tree.NewArrayTree;
+import com.sun.source.tree.NewClassTree;
+import com.sun.source.tree.Tree;
+import com.sun.source.tree.Tree.Kind;
+import com.sun.source.tree.TypeCastTree;
 import com.sun.source.util.TreePath;
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 import org.checkerframework.common.basetype.BaseAnnotatedTypeFactory;
+import org.checkerframework.common.basetype.BaseTypeChecker;
+import org.checkerframework.dataflow.analysis.FlowExpressions;
+import org.checkerframework.framework.flow.CFAbstractAnalysis;
+import org.checkerframework.framework.flow.CFStore;
+import org.checkerframework.framework.flow.CFTransfer;
+import org.checkerframework.framework.flow.CFValue;
+import org.checkerframework.framework.qual.PolyAll;
 import org.checkerframework.framework.type.AnnotatedTypeFactory;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
-import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedDeclaredType;
+import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedArrayType;
+import org.checkerframework.framework.type.DefaultTypeHierarchy;
+import org.checkerframework.framework.type.QualifierHierarchy;
+import org.checkerframework.framework.type.StructuralEqualityComparer;
+import org.checkerframework.framework.type.TypeHierarchy;
 import org.checkerframework.framework.type.treeannotator.ImplicitsTreeAnnotator;
 import org.checkerframework.framework.type.treeannotator.ListTreeAnnotator;
 import org.checkerframework.framework.type.treeannotator.PropagationTreeAnnotator;
 import org.checkerframework.framework.type.treeannotator.TreeAnnotator;
+import org.checkerframework.framework.type.typeannotator.ImplicitsTypeAnnotator;
 import org.checkerframework.framework.type.typeannotator.ListTypeAnnotator;
 import org.checkerframework.framework.type.typeannotator.TypeAnnotator;
-import org.checkerframework.framework.type.typeannotator.ImplicitsTypeAnnotator;
+import org.checkerframework.framework.util.FieldInvariants;
+import org.checkerframework.framework.util.FlowExpressionParseUtil.FlowExpressionParseException;
+import org.checkerframework.framework.util.MultiGraphQualifierHierarchy;
+import org.checkerframework.framework.util.MultiGraphQualifierHierarchy.MultiGraphFactory;
 import org.checkerframework.javacutil.AnnotationBuilder;
-import org.checkerframework.javacutil.Pair;
+import org.checkerframework.javacutil.AnnotationUtils;
+import org.checkerframework.javacutil.ElementUtils;
 import org.checkerframework.javacutil.TreeUtils;
+import org.checkerframework.javacutil.TypesUtils;
+import com.amazon.checkerframework.compliance.kms.inference.qual.*;
 
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.type.TypeKind;
+public class ComplianceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
 
-public class ComplianceInferenceAnnotatedTypeFactory extends InferenceAnnotatedTypeFactory {
-    public ComplianceInferenceAnnotatedTypeFactory(
-            InferenceChecker inferenceChecker,
-            boolean withCombineConstraints,
-            BaseAnnotatedTypeFactory realTypeFactory,
-            InferrableChecker realChecker,
-            SlotManager slotManager,
-            ConstraintManager constraintManager) {
-        super(
-                inferenceChecker,
-                withCombineConstraints,
-                realTypeFactory,
-                realChecker,
-                slotManager,
-                constraintManager);
+    protected final AnnotationMirror UNKNOWNAES;
+
+    protected final AnnotationMirror BOTTOMAES;
+
+    public ComplianceAnnotatedTypeFactory(BaseTypeChecker checker) {
+        super(checker);
+
+        BOTTOMAES = AnnotationBuilder.fromClass(elements, BottomAES.class);
+        UNKNOWNAES = AnnotationBuilder.fromClass(elements, UnknownVal.class);
+
         postInit();
     }
 
     @Override
     public TypeAnnotator createTypeAnnotator() {
-        return new ListTypeAnnotator(new ComplianceInferenceImplicitsTypeAnnotator(this));
+        return new ListTypeAnnotator(new ComplianceImplicitsTypeAnnotator(this));
     }
+
 
     @Override
-    public TreeAnnotator createTreeAnnotator() {
-        return new ListTreeAnnotator(new ComplianceInferenceImplicitsTreeAnnotator(this),
-                new CompilanceInferenceTreeAnnotator(this, realChecker, realTypeFactory, variableAnnotator, slotManager));
+    protected TreeAnnotator createTreeAnnotator() {
+        return new ListTreeAnnotator(
+                new ComplianceTreeAnnotator(this), new ComplianceImplicitsTreeAnnotator(this));
     }
 
-    protected class CompilanceInferenceTreeAnnotator extends InferenceTreeAnnotator {
-        public CompilanceInferenceTreeAnnotator(InferenceAnnotatedTypeFactory atypeFactory, InferrableChecker realChecker, AnnotatedTypeFactory realAnnotatedTypeFactory, VariableAnnotator variableAnnotator, SlotManager slotManager) {
-            super(atypeFactory, realChecker, realAnnotatedTypeFactory, variableAnnotator, slotManager);
+    /** The TreeAnnotator for this AnnotatedTypeFactory. It adds/replaces annotations. */
+    protected class ComplianceTreeAnnotator extends TreeAnnotator {
+        public ComplianceTreeAnnotator(ComplianceAnnotatedTypeFactory factory) {
+            super(factory);
         }
 
+        @Override
         public Void visitLiteral(LiteralTree tree, AnnotatedTypeMirror type) {
             Object value = tree.getValue();
             switch (tree.getKind()) {
@@ -122,24 +146,22 @@ public class ComplianceInferenceAnnotatedTypeFactory extends InferenceAnnotatedT
         }
     }
 
-    public class ComplianceInferenceImplicitsTreeAnnotator extends ImplicitsTreeAnnotator {
+    public class ComplianceImplicitsTreeAnnotator extends ImplicitsTreeAnnotator {
 
-        public ComplianceInferenceImplicitsTreeAnnotator(AnnotatedTypeFactory atypeFactory) {
+        public ComplianceImplicitsTreeAnnotator(AnnotatedTypeFactory atypeFactory) {
             super(atypeFactory);
-
-            // Add literal kinds
-            addLiteralKind(LiteralKind.NULL, AnnotationBuilder.fromClass(elements, BottomAES.class));
+            addLiteralKind(LiteralKind.NULL, BOTTOMAES);
             addLiteralKind(LiteralKind.STRING, AnnotationBuilder.fromClass(elements, StringVal.class));
             addLiteralKind(LiteralKind.CHAR, AnnotationBuilder.fromClass(elements, IntVal.class));
             addLiteralKind(LiteralKind.INT, AnnotationBuilder.fromClass(elements, IntVal.class));
             addLiteralKind(LiteralKind.LONG, AnnotationBuilder.fromClass(elements, IntVal.class));
-            addLiteralKind(LiteralKind.BOOLEAN, AnnotationBuilder.fromClass(elements, UnknownVal.class));
+            addLiteralKind(LiteralKind.BOOLEAN, UNKNOWNAES);
         }
     }
 
-    public class ComplianceInferenceImplicitsTypeAnnotator extends ImplicitsTypeAnnotator {
+    public class ComplianceImplicitsTypeAnnotator extends ImplicitsTypeAnnotator {
 
-        public ComplianceInferenceImplicitsTypeAnnotator(AnnotatedTypeFactory atypeFactory) {
+        public ComplianceImplicitsTypeAnnotator(AnnotatedTypeFactory atypeFactory) {
             super(atypeFactory);
 
             // Add type kinds

@@ -4,11 +4,12 @@
 export JSR308=/Users/ttx/Documents/jsr308_inference
 export CF=$JSR308/checker-framework
 export CFI=$JSR308/checker-framework-inference
+export AWSKMS=$JSR308/aws-sdk-java/aws-java-sdk-kms/target
 
 export KMS=$JSR308/aws-kms-compliance-checker
 
 # Dependencies
-export CLASSPATH=$KMS/build/classes/java/main:$CFI/dist/checker-framework-inference.jar
+export CLASSPATH=$KMS/build/classes/java/main:$CFI/dist/checker-framework-inference.jar:$AWSKMS/aws-java-sdk-kms-1.11.562-SNAPSHOT.jar:$KMS/aws-java-sdk-core-1.11.561.jar
 export external_checker_classpath=$KMS/build/classes/java/main:$KMS/build/resources/main
 
 export AFU=$JSR308/annotation-tools/annotation-file-utilities

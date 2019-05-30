@@ -14,7 +14,7 @@ export CLASSPATH=$KMS/build/classes/java/main:$AWSKMS/aws-java-sdk-kms-1.11.562-
 
 # Command
 DEBUG=""
-CHECKER="com.amazon.checkerframework.compliance.kms.ComplianceChecker"
+CHECKER="com.amazon.checkerframework.compliance.kms.typecheck.ComplianceChecker"
 
 declare -a ARGS
 for i in "$@" ; do
