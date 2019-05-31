@@ -1,6 +1,7 @@
 package com.amazon.checkerframework.compliance.kms.inference;
 
 import checkers.inference.InferenceChecker;
+import com.amazon.checkerframework.compliance.kms.inference.qual.*;
 import org.checkerframework.common.basetype.BaseAnnotatedTypeFactory;
 import checkers.inference.InferenceVisitor;
 import checkers.inference.InferenceAnnotatedTypeFactory;
@@ -24,6 +25,7 @@ import javax.lang.model.element.AnnotationMirror;
 import org.checkerframework.common.basetype.BaseAnnotatedTypeFactory;
 import org.checkerframework.framework.source.Result;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
+import org.checkerframework.javacutil.AnnotationBuilder;
 import org.checkerframework.javacutil.AnnotationUtils;
 import org.checkerframework.javacutil.TreeUtils;
 
@@ -50,19 +52,38 @@ public class ComplianceInferenceVisitor extends InferenceVisitor<ComplianceInfer
             AnnotatedTypeMirror rhsATM = iatf.getAnnotatedType(binaryTree.getRightOperand());
             // For types such as T extends @VarAnnot() Class, use @VarAnnot(), by grabbing
             // the effective annotation in varannot hierarchy
-            AnnotationMirror lhsEAM = lhsATM.getEffectiveAnnotationInHierarchy(iatf.getVarAnnot());
-            AnnotationMirror rhsEAM = rhsATM.getEffectiveAnnotationInHierarchy(iatf.getVarAnnot());
-            Slot lhs = slotManager.getSlot(lhsEAM);
-            Slot rhs = slotManager.getSlot(rhsEAM);
+            AnnotationMirror lhsAM = lhsATM.getEffectiveAnnotationInHierarchy(iatf.getVarAnnot());
+            AnnotationMirror rhsAM = rhsATM.getEffectiveAnnotationInHierarchy(iatf.getVarAnnot());
+            Slot lhs = slotManager.getSlot(lhsAM);
+            Slot rhs = slotManager.getSlot(rhsAM);
 
             Kind kind = binaryTree.getKind();
             switch (binaryTree.getKind()) {
                 case PLUS:
-                    if (TreeUtils.isStringConcatenation(binaryTree)) {
+                    if (lhsAM == null || rhsAM == null) {
+                        if (TreeUtils.isStringConcatenation(binaryTree)) {
+                            ArithmeticOperationKind opKind = ArithmeticOperationKind.fromTreeKind(kind);
+                            ArithmeticVariableSlot avsRes =
+                                    slotManager.getArithmeticVariableSlot(
+                                            VariableAnnotator.treeToLocation(atypeFactory, binaryTree));
+                            constraintManager.addArithmeticConstraint(opKind, lhs, rhs, avsRes);
+                        }
                         break;
                     }
+                    if ((AnnotationUtils.areSameByClass(rhsAM, AES.class)
+                            && AnnotationUtils.areSameByClass(lhsAM, Underline.class))
+                            || (AnnotationUtils.areSameByClass(rhsAM, AES_.class)
+                            && AnnotationUtils.areSameByClass(lhsAM, IntVal256.class))
+                            || (AnnotationUtils.areSameByClass(rhsAM, AES_.class)
+                            && AnnotationUtils.areSameByClass(lhsAM, IntVal128.class))) {
+                        ArithmeticOperationKind opKind = ArithmeticOperationKind.fromTreeKind(kind);
+                        ArithmeticVariableSlot avsRes =
+                                slotManager.getArithmeticVariableSlot(
+                                        VariableAnnotator.treeToLocation(atypeFactory, binaryTree));
+                        constraintManager.addArithmeticConstraint(opKind, lhs, rhs, avsRes);
+                    }
+                    break;
                 default:
-                    // TODO: replace with LUBSlot pending mier's PR
                     VariableSlot lubSlot =
                             slotManager.getVariableSlot(atypeFactory.getAnnotatedType(binaryTree));
                     // Create LUB constraint by default

@@ -86,9 +86,10 @@ public class ComplianceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
     @Override
     protected TreeAnnotator createTreeAnnotator() {
         return new ListTreeAnnotator(
-                new ComplianceTreeAnnotator(this),
                 new ComplianceImplicitsTreeAnnotator(this),
-                new CompliancePropagationTreeAnnotator(this));
+                new CompliancePropagationTreeAnnotator(this),
+                new ComplianceTreeAnnotator(this)
+                );
     }
 
     /** The TreeAnnotator for this AnnotatedTypeFactory. It adds/replaces annotations. */
@@ -119,6 +120,12 @@ public class ComplianceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
                 }
             }
             return super.visitMemberSelect(tree, type);
+        }
+    }
+
+    private final class CompliancePropagationTreeAnnotator extends PropagationTreeAnnotator {
+        public CompliancePropagationTreeAnnotator(ComplianceAnnotatedTypeFactory factory) {
+            super(factory);
         }
 
         @Override
@@ -161,6 +168,14 @@ public class ComplianceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
                         AnnotationBuilder builder = new AnnotationBuilder(processingEnv, Underline.class);
                         AnnotationMirror numberAnno = builder.build();
                         type.replaceAnnotation(numberAnno);
+                    } else if (data_string.equals("256")) {
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, IntVal256.class);
+                        AnnotationMirror numberAnno = builder.build();
+                        type.replaceAnnotation(numberAnno);
+                    } else if (data_string.equals("128")) {
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, IntVal128.class);
+                        AnnotationMirror numberAnno = builder.build();
+                        type.replaceAnnotation(numberAnno);
                     } else {
                         AnnotationBuilder builder = new AnnotationBuilder(processingEnv, StringVal.class);
                         AnnotationMirror numberAnno = builder.build();
@@ -170,12 +185,6 @@ public class ComplianceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
                 default:
                     return null;
             }
-        }
-    }
-
-    private final class CompliancePropagationTreeAnnotator extends PropagationTreeAnnotator {
-        public CompliancePropagationTreeAnnotator(ComplianceAnnotatedTypeFactory factory) {
-            super(factory);
         }
 
         @Override

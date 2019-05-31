@@ -1,5 +1,6 @@
 package com.amazon.checkerframework.compliance.kms.inference;
 
+import java.util.Set;
 import checkers.inference.InferenceAnnotatedTypeFactory;
 import checkers.inference.InferenceChecker;
 import checkers.inference.InferrableChecker;
@@ -71,72 +72,15 @@ public class ComplianceInferenceAnnotatedTypeFactory extends InferenceAnnotatedT
 
     @Override
     public TreeAnnotator createTreeAnnotator() {
-        return new ListTreeAnnotator(new ComplianceInferencePropagationTreeAnnotator(this),
+        return new ListTreeAnnotator(
                 new ComplianceInferenceImplicitsTreeAnnotator(this),
+                new ComplianceInferencePropagationTreeAnnotator(this),
                 new CompilanceInferenceTreeAnnotator(this, realChecker, realTypeFactory, variableAnnotator, slotManager));
     }
 
     protected class CompilanceInferenceTreeAnnotator extends InferenceTreeAnnotator {
         public CompilanceInferenceTreeAnnotator(InferenceAnnotatedTypeFactory atypeFactory, InferrableChecker realChecker, AnnotatedTypeFactory realAnnotatedTypeFactory, VariableAnnotator variableAnnotator, SlotManager slotManager) {
             super(atypeFactory, realChecker, realAnnotatedTypeFactory, variableAnnotator, slotManager);
-        }
-
-        public Void visitLiteral(LiteralTree tree, AnnotatedTypeMirror type) {
-            Object value = tree.getValue();
-            switch (tree.getKind()) {
-                case CHAR_LITERAL:
-                case LONG_LITERAL:
-                case INT_LITERAL:
-                    Number data_num = (Number) value;
-                    if (data_num.equals(256)) {
-                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, IntVal256.class);
-                        AnnotationMirror numberAnno = builder.build();
-                        type.replaceAnnotation(numberAnno);
-                    } else if (data_num.equals(128)) {
-                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, IntVal128.class);
-                        AnnotationMirror numberAnno = builder.build();
-                        type.replaceAnnotation(numberAnno);
-                    } else {
-                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, IntVal.class);
-                        AnnotationMirror numberAnno = builder.build();
-                        type.replaceAnnotation(numberAnno);
-                    }
-                    return null;
-                case STRING_LITERAL:
-                    String data_string= (String) value;
-                    if (data_string.equals("AES_256")) {
-                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES_256.class);
-                        AnnotationMirror numberAnno = builder.build();
-                        type.replaceAnnotation(numberAnno);
-                    } else if (data_string.equals("AES_128")) {
-                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES_128.class);
-                        AnnotationMirror numberAnno = builder.build();
-                        type.replaceAnnotation(numberAnno);
-                    } else if (data_string.equals("AES")) {
-                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES.class);
-                        AnnotationMirror numberAnno = builder.build();
-                        type.replaceAnnotation(numberAnno);
-                    } else if (data_string.equals("_")) {
-                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, Underline.class);
-                        AnnotationMirror numberAnno = builder.build();
-                        type.replaceAnnotation(numberAnno);
-                    } else if (data_string.equals("256")) {
-                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, IntVal256.class);
-                        AnnotationMirror numberAnno = builder.build();
-                        type.replaceAnnotation(numberAnno);
-                    } else if (data_string.equals("128")) {
-                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, IntVal128.class);
-                        AnnotationMirror numberAnno = builder.build();
-                        type.replaceAnnotation(numberAnno);
-                    } else {
-                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, StringVal.class);
-                        AnnotationMirror numberAnno = builder.build();
-                        type.replaceAnnotation(numberAnno);
-                    }
-                    return null;
-                default:
-                    return null;
-            }
         }
     }
 
@@ -181,37 +125,66 @@ public class ComplianceInferenceAnnotatedTypeFactory extends InferenceAnnotatedT
         }
 
         @Override
-        public Void visitBinary(BinaryTree binaryTree, AnnotatedTypeMirror type) {
-            Tree.Kind kind = binaryTree.getKind();
-            AnnotatedTypeMirror lhsATM = atypeFactory.getAnnotatedType(binaryTree.getLeftOperand());
-            AnnotatedTypeMirror rhsATM = atypeFactory.getAnnotatedType(binaryTree.getRightOperand());
-            AnnotationMirror lhsAM = lhsATM.getEffectiveAnnotationInHierarchy(UNKNOWNVAL);
-            AnnotationMirror rhsAM = rhsATM.getEffectiveAnnotationInHierarchy(UNKNOWNVAL);
-
-            switch (kind) {
-                case PLUS:
-                    if (lhsAM == null || rhsAM == null) {
-                        return super.visitBinary(binaryTree, type);
-                    }
-                    if (AnnotationUtils.areSameByClass(rhsAM, AES.class)
-                            && AnnotationUtils.areSameByClass(lhsAM, Underline.class)) {
-                        type.replaceAnnotation(AnnotationBuilder.fromClass(elements, AES_.class));
-                    } else if (AnnotationUtils.areSameByClass(rhsAM, AES_.class)
-                            && AnnotationUtils.areSameByClass(lhsAM, IntVal256.class)) {
-                        type.replaceAnnotation(AnnotationBuilder.fromClass(elements, AES_256.class));
-                    } else if (AnnotationUtils.areSameByClass(rhsAM, AES_.class)
-                            && AnnotationUtils.areSameByClass(lhsAM, IntVal128.class)) {
-                        type.replaceAnnotation(AnnotationBuilder.fromClass(elements, AES_128.class));
+        public Void visitLiteral(LiteralTree tree, AnnotatedTypeMirror type) {
+            Object value = tree.getValue();
+            switch (tree.getKind()) {
+                case CHAR_LITERAL:
+                case LONG_LITERAL:
+                case INT_LITERAL:
+                    Number data_num = (Number) value;
+                    if (data_num.equals(256)) {
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, IntVal256.class);
+                        AnnotationMirror numberAnno = builder.build();
+                        type.replaceAnnotation(numberAnno);
+                    } else if (data_num.equals(128)) {
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, IntVal128.class);
+                        AnnotationMirror numberAnno = builder.build();
+                        type.replaceAnnotation(numberAnno);
                     } else {
-                        return super.visitBinary(binaryTree, type);
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, IntVal.class);
+                        AnnotationMirror numberAnno = builder.build();
+                        type.replaceAnnotation(numberAnno);
                     }
-                    break;
+                    return null;
+                case STRING_LITERAL:
+                    String data_string= (String) value;
+                    if (data_string.equals("AES_256")) {
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES_256.class);
+                        AnnotationMirror numberAnno = builder.build();
+                        type.replaceAnnotation(numberAnno);
+                    } else if (data_string.equals("AES_128")) {
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES_128.class);
+                        AnnotationMirror numberAnno = builder.build();
+                        type.replaceAnnotation(numberAnno);
+                    } else if (data_string.equals("AES")) {
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES.class);
+                        AnnotationMirror numberAnno = builder.build();
+                        type.replaceAnnotation(numberAnno);
+                    } else if (data_string.equals("AES_")) {
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES_.class);
+                        AnnotationMirror numberAnno = builder.build();
+                        type.replaceAnnotation(numberAnno);
+                    } else if (data_string.equals("_")) {
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, Underline.class);
+                        AnnotationMirror numberAnno = builder.build();
+                        type.replaceAnnotation(numberAnno);
+                    } else if (data_string.equals("256")) {
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, IntVal256.class);
+                        AnnotationMirror numberAnno = builder.build();
+                        type.replaceAnnotation(numberAnno);
+                    } else if (data_string.equals("128")) {
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, IntVal128.class);
+                        AnnotationMirror numberAnno = builder.build();
+                        type.replaceAnnotation(numberAnno);
+                    } else {
+                        AnnotationBuilder builder = new AnnotationBuilder(processingEnv, StringVal.class);
+                        AnnotationMirror numberAnno = builder.build();
+                        type.replaceAnnotation(numberAnno);
+                    }
+                    return null;
                 default:
-                    // Check LUB by default
-                    return super.visitBinary(binaryTree, type);
+                    return null;
             }
-
-            return null;
         }
     }
 
@@ -230,69 +203,67 @@ public class ComplianceInferenceAnnotatedTypeFactory extends InferenceAnnotatedT
                 ConstraintManager constraintManager) {
             super(typeFactory, realTypeFactory, realChecker, slotManager, constraintManager);
         }
-//
-//        @Override
-//        public void handleBinaryTree(AnnotatedTypeMirror atm, BinaryTree binaryTree) {
-//            // Super creates an LUB constraint by default, we create an VariableSlot here
-//            // instead for the result of the binary op and create LUB constraint in units
-//            // visitor.
-//            if (treeToVarAnnoPair.containsKey(binaryTree)) {
-//                atm.replaceAnnotations(treeToVarAnnoPair.get(binaryTree).second);
-//            } else {
-//                // grab slots for the component (only for lub slot)
-//                AnnotatedTypeMirror lhsATM =
-//                        inferenceTypeFactory.getAnnotatedType(binaryTree.getLeftOperand());
-//                AnnotatedTypeMirror rhsATM =
-//                        inferenceTypeFactory.getAnnotatedType(binaryTree.getRightOperand());
-//                AnnotationMirror lhsAM = lhsATM.getEffectiveAnnotationInHierarchy(UNKNOWNVAL);
-//                AnnotationMirror rhsAM = rhsATM.getEffectiveAnnotationInHierarchy(UNKNOWNVAL);
-//                VariableSlot lhs = slotManager.getVariableSlot(lhsATM);
-//                VariableSlot rhs = slotManager.getVariableSlot(rhsATM);
-//
-//                // create varslot for the result of the binary tree computation
-//                // note: constraints for binary ops are added in UnitsVisitor
-//                VariableSlot result;
-//                switch (binaryTree.getKind()) {
-//                    case PLUS:
-//                        if (lhsAM == null || rhsAM == null) {
-//                            return super.visitBinary(binaryTree, type);
-//                        }
-//                        if (AnnotationUtils.areSameByClass(rhsAM, AES.class)
-//                                && AnnotationUtils.areSameByClass(lhsAM, Underline.class)) {
-//                            type.replaceAnnotation(AnnotationBuilder.fromClass(elements, AES_.class));
-//                        } else if (AnnotationUtils.areSameByClass(rhsAM, AES_.class)
-//                                && AnnotationUtils.areSameByClass(lhsAM, IntVal256.class)) {
-//                            type.replaceAnnotation(AnnotationBuilder.fromClass(elements, AES_256.class));
-//                        } else if (AnnotationUtils.areSameByClass(rhsAM, AES_.class)
-//                                && AnnotationUtils.areSameByClass(lhsAM, IntVal128.class)) {
-//                            type.replaceAnnotation(AnnotationBuilder.fromClass(elements, AES_128.class));
-//                        } else {
-//                            return super.visitBinary(binaryTree, type);
-//                        }
-//                        slotManager.createArithmeticVariableSlot()
-//
-//                        // if it is a string concatenation, result is dimensionless
-//                        if (TreeUtils.isStringConcatenation(binaryTree)) {
-//                            result = slotManager.createConstantSlot(unitsRepUtils.DIMENSIONLESS);
-//                            break;
-//                        } // else create arithmetic slot
-//                    default:
-//                        result = slotManager.createLubVariableSlot(lhs, rhs);
-//                        break;
-//                }
-//
-//                // insert varAnnot of the slot into the ATM
-//                AnnotationMirror resultAM = slotManager.getAnnotation(result);
-//                atm.clearAnnotations();
-//                atm.replaceAnnotation(resultAM);
-//
-//                // add to cache
-//                Set<AnnotationMirror> resultSet = AnnotationUtils.createAnnotationSet();
-//                resultSet.add(resultAM);
-//                final Pair<VariableSlot, Set<? extends AnnotationMirror>> varATMPair =
-//                        Pair.of(slotManager.getVariableSlot(atm), resultSet);
-//                treeToVarAnnoPair.put(binaryTree, varATMPair);
-//            }
-//        }
+
+        @Override
+        public void handleBinaryTree(AnnotatedTypeMirror atm, BinaryTree binaryTree) {
+            // Super creates an LUB constraint by default, we create an VariableSlot here
+            // instead for the result of the binary op and create LUB constraint
+
+            // create varslot for the result of the binary tree computation
+            // note: constraints for binary ops are added in Visitor
+            if (this.treeToVarAnnoPair.containsKey(binaryTree)) {
+                atm.replaceAnnotations((Iterable)((Pair)this.treeToVarAnnoPair.get(binaryTree)).second);
+            } else {
+                AnnotatedTypeMirror lhsATM = this.inferenceTypeFactory.getAnnotatedType(binaryTree.getLeftOperand());
+                AnnotatedTypeMirror rhsATM = this.inferenceTypeFactory.getAnnotatedType(binaryTree.getRightOperand());
+                AnnotationMirror lhsAM = lhsATM.getEffectiveAnnotationInHierarchy(UNKNOWNVAL);
+                AnnotationMirror rhsAM = rhsATM.getEffectiveAnnotationInHierarchy(UNKNOWNVAL);
+                // grab slots for the component (only for lub slot)
+                VariableSlot lhs = slotManager.getVariableSlot(lhsATM);
+                VariableSlot rhs = slotManager.getVariableSlot(rhsATM);
+
+                VariableSlot result;
+                switch (binaryTree.getKind()) {
+                    case PLUS:
+                        if (lhsAM == null || rhsAM == null) {
+                            if (TreeUtils.isStringConcatenation(binaryTree)) {
+                                result = slotManager.createArithmeticVariableSlot(
+                                        VariableAnnotator.treeToLocation(
+                                                inferenceTypeFactory, binaryTree));
+                            } else {
+                                result = slotManager.createLubVariableSlot(lhs, rhs);
+                            }
+                            break;
+                        }
+
+                        if (AnnotationUtils.areSameByClass(lhsAM, AES.class)
+                                && AnnotationUtils.areSameByClass(rhsAM, Underline.class)) {
+                            result = slotManager.createConstantSlot(AnnotationBuilder.fromClass(elements, AES_.class));
+                        } else if (AnnotationUtils.areSameByClass(lhsAM, AES_.class)
+                                && AnnotationUtils.areSameByClass(rhsAM, IntVal256.class)) {
+                            result = slotManager.createConstantSlot(AnnotationBuilder.fromClass(elements, AES_256.class));
+                        } else if (AnnotationUtils.areSameByClass(lhsAM, AES_.class)
+                                && AnnotationUtils.areSameByClass(rhsAM, IntVal128.class)) {
+                            result = slotManager.createConstantSlot(AnnotationBuilder.fromClass(elements, AES_128.class));
+                        } else {
+                            result = slotManager.createLubVariableSlot(lhs, rhs);
+                        }
+                        break;
+                    default:
+                        result = slotManager.createLubVariableSlot(lhs, rhs);
+                        break;
+                }
+
+                // insert varAnnot of the slot into the ATM
+                AnnotationMirror resultAM = slotManager.getAnnotation(result);
+                atm.clearAnnotations();
+                atm.replaceAnnotation(resultAM);
+
+                Set<AnnotationMirror> resultSet = AnnotationUtils.createAnnotationSet();
+                resultSet.add(resultAM);
+                final Pair<VariableSlot, Set<? extends AnnotationMirror>> varATMPair = Pair.of(slotManager.getVariableSlot(atm), resultSet);
+                treeToVarAnnoPair.put(binaryTree, varATMPair);
+            }
+        }
     }
 }
