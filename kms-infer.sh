@@ -16,6 +16,10 @@ export AFU=$JSR308/annotation-tools/annotation-file-utilities
 export PATH=$AFU/scripts:$PATH
 export JDK_JAR=$CF/checker/dist/jdk8.jar
 
+Z3=$JSR308/z3/bin
+export PATH=$Z3:$PATH
+export DYLD_LIBRARY_PATH = $Z3
+
 CHECKER=com.amazon.checkerframework.compliance.kms.inference.ComplianceInferenceChecker
 
 SOLVER=com.amazon.checkerframework.compliance.kms.inference.solver.ComplianceSolverEngine

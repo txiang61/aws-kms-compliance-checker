@@ -24,7 +24,11 @@ class Kms {
     }
 
     String getKeySpec2() {
-        String keySpec = aes_ + 256;
+        String keySpec = algorithm + "_" + kmsBits;
+        setKeySpec(keySpec);
+        //String keySpec = here + algorithm;
+        //String keySpec = algorithm + here;
+        //String keySpec = test + kmsBitss;
         return keySpec;
     }
 
@@ -33,5 +37,5 @@ class Kms {
         return kmsBits;
     }
 
-    void setKeySpec(String spec) { }
+    void setKeySpec(@AES_256 String spec) { }
 }

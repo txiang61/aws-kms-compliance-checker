@@ -50,6 +50,8 @@ dependencies {
   // sat4j solver dependency
   compile 'org.ow2.sat4j:org.ow2.sat4j.core:2.3.4'
   compile 'org.ow2.sat4j:org.ow2.sat4j.maxsat:2.3.4'
+  // z3 solver dependency
+  compile fileTree(dir: "${cfiPath}/lib", include: "com.microsoft.z3.jar")
 }
 
 dependencyManagement {

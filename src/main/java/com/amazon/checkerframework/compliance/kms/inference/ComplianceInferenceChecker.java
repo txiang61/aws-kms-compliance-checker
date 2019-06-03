@@ -47,6 +47,7 @@ public class ComplianceInferenceChecker extends BaseInferrableChecker {
     @Override
     public void initChecker() {
         super.initChecker();
+        ComplianceAnnotationMirrorHolder.init(this);
     }
 
     @Override

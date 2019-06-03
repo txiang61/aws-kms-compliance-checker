@@ -41,11 +41,6 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeKind;
 
 public class ComplianceInferenceAnnotatedTypeFactory extends InferenceAnnotatedTypeFactory {
-
-    protected final AnnotationMirror UNKNOWNVAL;
-
-    protected final AnnotationMirror BOTTOMVAL;
-
     public ComplianceInferenceAnnotatedTypeFactory(
             InferenceChecker inferenceChecker,
             boolean withCombineConstraints,
@@ -60,8 +55,6 @@ public class ComplianceInferenceAnnotatedTypeFactory extends InferenceAnnotatedT
                 realChecker,
                 slotManager,
                 constraintManager);
-        BOTTOMVAL = AnnotationBuilder.fromClass(elements, BottomAES.class);
-        UNKNOWNVAL = AnnotationBuilder.fromClass(elements, UnknownVal.class);
         postInit();
     }
 
@@ -81,6 +74,25 @@ public class ComplianceInferenceAnnotatedTypeFactory extends InferenceAnnotatedT
     protected class CompilanceInferenceTreeAnnotator extends InferenceTreeAnnotator {
         public CompilanceInferenceTreeAnnotator(InferenceAnnotatedTypeFactory atypeFactory, InferrableChecker realChecker, AnnotatedTypeFactory realAnnotatedTypeFactory, VariableAnnotator variableAnnotator, SlotManager slotManager) {
             super(atypeFactory, realChecker, realAnnotatedTypeFactory, variableAnnotator, slotManager);
+        }
+
+        private static final String DATA_KEY_SPEC = "com.amazonaws.services.kms.model.DataKeySpec";
+
+        @Override
+        public Void visitMemberSelect(MemberSelectTree tree, AnnotatedTypeMirror type) {
+            if (DATA_KEY_SPEC.equals(getAnnotatedType(tree.getExpression()).getUnderlyingType().toString())) {
+                String identifier = tree.getIdentifier().toString();
+                if (identifier.equals("AES_256")) {
+                    AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES_256.class);
+                    AnnotationMirror numberAnno = builder.build();
+                    type.replaceAnnotation(numberAnno);
+                } else if (identifier.equals("AES_128")) {
+                    AnnotationBuilder builder = new AnnotationBuilder(processingEnv, AES_128.class);
+                    AnnotationMirror numberAnno = builder.build();
+                    type.replaceAnnotation(numberAnno);
+                }
+            }
+            return super.visitMemberSelect(tree, type);
         }
     }
 
@@ -216,8 +228,8 @@ public class ComplianceInferenceAnnotatedTypeFactory extends InferenceAnnotatedT
             } else {
                 AnnotatedTypeMirror lhsATM = this.inferenceTypeFactory.getAnnotatedType(binaryTree.getLeftOperand());
                 AnnotatedTypeMirror rhsATM = this.inferenceTypeFactory.getAnnotatedType(binaryTree.getRightOperand());
-                AnnotationMirror lhsAM = lhsATM.getEffectiveAnnotationInHierarchy(UNKNOWNVAL);
-                AnnotationMirror rhsAM = rhsATM.getEffectiveAnnotationInHierarchy(UNKNOWNVAL);
+                AnnotationMirror lhsAM = lhsATM.getEffectiveAnnotationInHierarchy(ComplianceAnnotationMirrorHolder.UNKNOWNVAL);
+                AnnotationMirror rhsAM = rhsATM.getEffectiveAnnotationInHierarchy(ComplianceAnnotationMirrorHolder.UNKNOWNVAL);
                 // grab slots for the component (only for lub slot)
                 VariableSlot lhs = slotManager.getVariableSlot(lhsATM);
                 VariableSlot rhs = slotManager.getVariableSlot(rhsATM);
